@@ -1,7 +1,7 @@
 title: Developer Documentation
 description: Technical documentation, guides, references, and engineering articles.
 url: "https://agenticmotion.github.io"
-baseurl: ""
+baseurl: "/developer-docs"
 theme: minima
 plugins:
   - jekyll-feed
