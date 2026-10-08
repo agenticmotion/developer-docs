@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.9.1 -->
+<title>AZTA Architecture | Developer Documentation</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="AZTA Architecture" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Technical documentation, guides, references, and engineering articles." />
+<meta name="twitter:description" property="og:description" content="Technical documentation, guides, references, and engineering articles." />
+<link rel="canonical" href="https://agenticmotion.github.io/developer-docs/docs/azta/architecture/" />
+<meta property="og:url" content="https://agenticmotion.github.io/developer-docs/docs/azta/architecture/" />
+<meta property="og:site_name" content="Developer Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="AZTA Architecture" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Technical documentation, guides, references, and engineering articles.","headline":"AZTA Architecture","url":"https://agenticmotion.github.io/developer-docs/docs/azta/architecture/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/developer-docs/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://agenticmotion.github.io/developer-docs/feed.xml" title="Developer Documentation" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/developer-docs/">Developer Documentation</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/developer-docs/docs/azta/architecture/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/audit-schema/">AZTA Audit Event Schema</a><a class="page-link" href="/developer-docs/docs/azta/enforcement-layers/">AZTA Enforcement Layers</a><a class="page-link" href="/developer-docs/docs/azta/execution-model/">AZTA Execution Model</a><a class="page-link" href="/developer-docs/docs/azta/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/">AZTA Specification</a><a class="page-link" href="/developer-docs/">Developer Documentation</a><a class="page-link" href="/developer-docs/docs/security/">AZTA Security</a><a class="page-link" href="/developer-docs/docs/">AZTA Documentation</a><a class="page-link" href="/developer-docs/docs/reference/">AZTA Reference</a><a class="page-link" href="/developer-docs/docs/compliance/">AZTA Compliance</a><a class="page-link" href="/developer-docs/docs/azta/threat-model/">AZTA Threat Model</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <h1 id="azta-architecture">AZTA Architecture</h1>
+
+<p><strong>Agentic Zero Trust Architecture (AZTA)</strong> is a security architecture for AI-agent systems that separates probabilistic model reasoning from deterministic security enforcement.</p>
+
+<h2 id="open-standard-closed-execution">Open Standard. Closed Execution.</h2>
+
+<p>AZTA is based on a simple architectural premise:</p>
+
+<blockquote>
+  <p><strong>The model may reason. The control plane decides.</strong></p>
+</blockquote>
+
+<p>Large language models and other probabilistic reasoning systems are capable of planning, interpreting context, selecting tools, and generating actions. They should not, however, be treated as the ultimate authority for security-sensitive decisions.</p>
+
+<p>AZTA therefore places security-critical controls outside the model’s reasoning process.</p>
+
+<p>The architecture establishes independent enforcement boundaries for:</p>
+
+<ul>
+  <li>identity</li>
+  <li>authorization</li>
+  <li>input validation</li>
+  <li>tool execution</li>
+  <li>runtime isolation</li>
+  <li>human authorization</li>
+  <li>telemetry</li>
+  <li>audit evidence</li>
+  <li>incident response</li>
+</ul>
+
+<p>The objective is to ensure that compromising or manipulating the reasoning layer does not automatically compromise the surrounding system.</p>
+
+<hr />
+
+<h2 id="architectural-principle">Architectural Principle</h2>
+
+<p>Traditional application security commonly assumes that trusted application code makes security decisions.</p>
+
+<p>Agentic systems complicate this model because an LLM can dynamically:</p>
+
+<ul>
+  <li>interpret untrusted instructions</li>
+  <li>select tools</li>
+  <li>construct parameters</li>
+  <li>retrieve information</li>
+  <li>generate multi-step plans</li>
+  <li>invoke external systems</li>
+  <li>modify application state</li>
+  <li>operate across multiple execution cycles</li>
+</ul>
+
+<p>The model’s output is therefore treated as <strong>untrusted intent</strong>.</p>
+
+<p>AZTA introduces deterministic enforcement boundaries around that intent.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    UNTRUSTED / PROBABILISTIC
+                    ─────────────────────────
+
+ User / Event
+      │
+      ▼
+┌──────────────────────────────┐
+│ 1. Ingress Semantic Firewall │
+│                              │
+│ Input classification         │
+│ Trust-boundary normalization │
+│ Semantic threat detection    │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ 2. Deterministic Policy      │
+│    Gateway                   │
+│                              │
+│ Identity                     │
+│ Authorization                │
+│ Policy evaluation            │
+│ Tool permissions             │
+└──────────────┬───────────────┘
+               │
+               ▼
+       ┌─────────────────┐
+       │ Agent / LLM     │
+       │ Reasoning       │
+       │                 │
+       │ Planning        │
+       │ Interpretation  │
+       │ Tool selection  │
+       └────────┬────────┘
+                │
+                │ proposed action
+                ▼
+
+                    TRUSTED ENFORCEMENT
+                    ───────────────────
+
+┌──────────────────────────────┐
+│ 3. Ephemeral MicroVM         │
+│    Sandboxing                │
+│                              │
+│ Isolated execution           │
+│ Resource constraints         │
+│ Filesystem isolation         │
+│ Network controls             │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ 4. Asynchronous HITL         │
+│    Interceptor               │
+│                              │
+│ Approval gates               │
+│ Risk escalation              │
+│ Human authorization          │
+│ Execution interruption       │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ External Tool / System       │
+│                              │
+│ APIs                         │
+│ Databases                    │
+│ SaaS systems                 │
+│ Infrastructure               │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ 5. Forensic Telemetry        │
+│    Engine                    │
+│                              │
+│ Trace events                 │
+│ Policy decisions             │
+│ Tool activity                │
+│ Identity context             │
+│ Runtime evidence             │
+└──────────────────────────────┘
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="trust-boundaries">Trust Boundaries</h2>
+
+<p>AZTA divides the agent execution path into explicit trust boundaries.</p>
+
+<h3 id="boundary-1--ingress">Boundary 1 — Ingress</h3>
+
+<p>All external instructions enter through a controlled ingress boundary.</p>
+
+<p>Potential sources include:</p>
+
+<ul>
+  <li>users</li>
+  <li>applications</li>
+  <li>webhooks</li>
+  <li>scheduled events</li>
+  <li>external agents</li>
+  <li>API requests</li>
+  <li>retrieved content</li>
+</ul>
+
+<p>The ingress layer establishes normalized security context before downstream execution begins.</p>
+
+<hr />
+
+<h3 id="boundary-2--policy">Boundary 2 — Policy</h3>
+
+<p>The policy gateway determines whether a proposed operation is permitted.</p>
+
+<p>The policy decision should not depend solely on the model’s interpretation of its own authority.</p>
+
+<p>Relevant context can include:</p>
+
+<ul>
+  <li>authenticated identity</li>
+  <li>agent identity</li>
+  <li>tenant</li>
+  <li>requested capability</li>
+  <li>target resource</li>
+  <li>requested operation</li>
+  <li>risk classification</li>
+  <li>environment</li>
+  <li>current policy</li>
+  <li>execution state</li>
+</ul>
+
+<p>The policy layer produces a deterministic authorization result.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Request
+   │
+   ▼
+Identity + Context
+   │
+   ▼
+Policy Evaluation
+   │
+   ├── DENY ───────────────► Stop
+   │
+   ├── ALLOW ──────────────► Continue
+   │
+   └── REQUIRE_APPROVAL ──► HITL
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="boundary-3--reasoning">Boundary 3 — Reasoning</h3>
+
+<p>The LLM operates as a reasoning component rather than a security authority.</p>
+
+<p>Its responsibilities may include:</p>
+
+<ul>
+  <li>interpreting the request</li>
+  <li>generating plans</li>
+  <li>selecting candidate tools</li>
+  <li>constructing proposed operations</li>
+  <li>determining execution order</li>
+  <li>interpreting tool results</li>
+</ul>
+
+<p>Its responsibilities do not include independently granting itself permissions.</p>
+
+<p>A model-generated statement such as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"I am authorized to access this resource."
+</code></pre></div></div>
+
+<p>is not itself an authorization decision.</p>
+
+<p>Authorization must be established by the control plane.</p>
+
+<hr />
+
+<h3 id="boundary-4--execution">Boundary 4 — Execution</h3>
+
+<p>Agent-generated actions execute inside controlled runtime boundaries.</p>
+
+<p>The execution environment should be capable of limiting:</p>
+
+<ul>
+  <li>filesystem access</li>
+  <li>network access</li>
+  <li>process creation</li>
+  <li>credentials</li>
+  <li>available tools</li>
+  <li>resource consumption</li>
+  <li>execution lifetime</li>
+  <li>access to host infrastructure</li>
+</ul>
+
+<p>AZTA uses ephemeral isolation as a mechanism for reducing blast radius.</p>
+
+<p>The exact runtime technology is an implementation choice. MicroVMs are one possible implementation of the isolation boundary.</p>
+
+<hr />
+
+<h3 id="boundary-5--human-authorization">Boundary 5 — Human Authorization</h3>
+
+<p>Certain operations require an explicit human decision.</p>
+
+<p>Examples may include:</p>
+
+<ul>
+  <li>destructive actions</li>
+  <li>high-impact state changes</li>
+  <li>privileged operations</li>
+  <li>financial actions</li>
+  <li>production infrastructure changes</li>
+  <li>access to sensitive resources</li>
+  <li>policy-defined high-risk operations</li>
+</ul>
+
+<p>Human approval should occur outside the model’s control loop.</p>
+
+<p>The model may request authorization.</p>
+
+<p>It does not grant authorization.</p>
+
+<hr />
+
+<h3 id="boundary-6--evidence">Boundary 6 — Evidence</h3>
+
+<p>Runtime activity must produce sufficient evidence to reconstruct what happened.</p>
+
+<p>Relevant events can include:</p>
+
+<ul>
+  <li>request reception</li>
+  <li>identity resolution</li>
+  <li>policy evaluation</li>
+  <li>model-generated intent</li>
+  <li>tool selection</li>
+  <li>tool invocation</li>
+  <li>execution result</li>
+  <li>human approval</li>
+  <li>denial</li>
+  <li>exception</li>
+  <li>termination</li>
+  <li>credential or token events</li>
+  <li>system state changes</li>
+</ul>
+
+<p>Telemetry is therefore treated as a security control rather than merely an observability feature.</p>
+
+<hr />
+
+<h1 id="control-plane-and-data-plane">Control Plane and Data Plane</h1>
+
+<p>AZTA distinguishes between the <strong>control plane</strong> and the <strong>agent execution/data plane</strong>.</p>
+
+<h2 id="control-plane">Control Plane</h2>
+
+<p>The control plane contains deterministic security mechanisms responsible for deciding and enforcing what the agent is allowed to do.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>identity services</li>
+  <li>policy engines</li>
+  <li>authorization services</li>
+  <li>approval systems</li>
+  <li>execution admission controls</li>
+  <li>runtime isolation controls</li>
+  <li>audit pipelines</li>
+  <li>kill switches</li>
+  <li>credential controls</li>
+</ul>
+
+<h2 id="agent-execution-plane">Agent Execution Plane</h2>
+
+<p>The execution plane contains the components performing probabilistic reasoning and permitted operations.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>LLMs</li>
+  <li>agent runtimes</li>
+  <li>planners</li>
+  <li>tool adapters</li>
+  <li>retrieval systems</li>
+  <li>application logic</li>
+  <li>isolated execution environments</li>
+</ul>
+
+<p>The fundamental relationship is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             CONTROL PLANE
+        ┌─────────────────────┐
+        │ Identity            │
+        │ Policy              │
+        │ Authorization       │
+        │ Approval            │
+        │ Isolation           │
+        │ Audit               │
+        └──────────┬──────────┘
+                   │
+                   │ governs
+                   ▼
+        ┌─────────────────────┐
+        │ EXECUTION PLANE     │
+        │                     │
+        │ Agent               │
+        │ LLM                 │
+        │ Tools               │
+        │ Retrieval           │
+        │ Runtime             │
+        └─────────────────────┘
+</code></pre></div></div>
+
+<p>The execution plane can request capabilities from the control plane, but the execution plane does not become the authority that grants those capabilities.</p>
+
+<hr />
+
+<h1 id="capability-based-execution">Capability-Based Execution</h1>
+
+<p>AZTA favors explicit capabilities over implicit authority.</p>
+
+<p>Instead of allowing an agent to possess unrestricted access to a system, the control plane should establish narrowly scoped permissions.</p>
+
+<p>A capability can conceptually contain:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Principal
+    +
+Capability
+    +
+Target
+    +
+Operation
+    +
+Context
+    +
+Policy
+    =
+Execution Decision
+</code></pre></div></div>
+
+<p>For example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent.example"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"capability"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ticket.update"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ticket:12345"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"operation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"update"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"environment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"production"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The example is illustrative rather than a normative AZTA schema.</p>
+
+<p>The authoritative decision remains the responsibility of the policy layer.</p>
+
+<hr />
+
+<h1 id="failure-containment">Failure Containment</h1>
+
+<p>AZTA assumes that individual components can fail or become compromised.</p>
+
+<p>Security therefore should not depend on every component behaving correctly.</p>
+
+<p>The architecture aims to prevent failures from propagating across trust boundaries.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Compromised Input
+       │
+       ▼
+Ingress Controls
+       │
+       X  blocked
+       │
+       ▼
+Compromised Model
+       │
+       ▼
+Policy Gateway
+       │
+       X  unauthorized action denied
+       │
+       ▼
+Compromised Runtime
+       │
+       ▼
+Ephemeral Isolation
+       │
+       X  blast radius constrained
+       │
+       ▼
+High-Risk Operation
+       │
+       ▼
+HITL Interceptor
+       │
+       X  approval unavailable
+       │
+       ▼
+Telemetry / Evidence
+</code></pre></div></div>
+
+<p>The goal is not to guarantee that an agent can never fail.</p>
+
+<p>The goal is to ensure that failure does not automatically become unrestricted authority.</p>
+
+<hr />
+
+<h1 id="defense-in-depth">Defense in Depth</h1>
+
+<p>AZTA does not rely on a single security mechanism.</p>
+
+<p>The five enforcement layers provide multiple independent opportunities to detect, prevent, constrain, interrupt, and reconstruct agent activity.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Primary Function</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ingress Semantic Firewall</td>
+      <td>Inspect and normalize inbound activity</td>
+    </tr>
+    <tr>
+      <td>Deterministic Policy Gateway</td>
+      <td>Authorize capabilities and operations</td>
+    </tr>
+    <tr>
+      <td>Ephemeral MicroVM Sandboxing</td>
+      <td>Contain execution</td>
+    </tr>
+    <tr>
+      <td>Asynchronous HITL Interceptor</td>
+      <td>Require human authorization</td>
+    </tr>
+    <tr>
+      <td>Forensic Telemetry Engine</td>
+      <td>Preserve runtime evidence</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each layer addresses a different failure mode.</p>
+
+<p>A control should therefore not be considered redundant simply because another layer exists.</p>
+
+<hr />
+
+<h1 id="security-invariants">Security Invariants</h1>
+
+<p>An AZTA implementation should preserve several architectural invariants.</p>
+
+<h2 id="1-model-output-is-untrusted">1. Model output is untrusted</h2>
+
+<p>Generated content, plans, tool selections, and proposed actions are treated as untrusted inputs to downstream security controls.</p>
+
+<h2 id="2-authorization-is-external-to-model-reasoning">2. Authorization is external to model reasoning</h2>
+
+<p>The model cannot grant itself additional privileges through generated instructions.</p>
+
+<h2 id="3-tool-execution-is-policy-mediated">3. Tool execution is policy-mediated</h2>
+
+<p>Sensitive tool operations pass through deterministic authorization before execution.</p>
+
+<h2 id="4-execution-has-a-containment-boundary">4. Execution has a containment boundary</h2>
+
+<p>Agent workloads should execute within explicitly defined runtime constraints appropriate to their risk.</p>
+
+<h2 id="5-high-risk-actions-can-be-interrupted">5. High-risk actions can be interrupted</h2>
+
+<p>The architecture must provide a mechanism for requiring human authorization when policy demands it.</p>
+
+<h2 id="6-security-decisions-are-observable">6. Security decisions are observable</h2>
+
+<p>Important authorization and execution decisions produce auditable evidence.</p>
+
+<h2 id="7-failure-should-be-bounded">7. Failure should be bounded</h2>
+
+<p>A compromised model, tool, credential, or runtime should not automatically obtain unrestricted authority over the surrounding environment.</p>
+
+<hr />
+
+<h1 id="implementation-independence">Implementation Independence</h1>
+
+<p>AZTA defines architectural responsibilities rather than requiring one specific vendor or technology stack.</p>
+
+<p>Possible implementations may use different:</p>
+
+<ul>
+  <li>LLM providers</li>
+  <li>agent frameworks</li>
+  <li>policy engines</li>
+  <li>identity providers</li>
+  <li>runtime isolation technologies</li>
+  <li>telemetry platforms</li>
+  <li>storage systems</li>
+  <li>human approval systems</li>
+</ul>
+
+<p>The architectural requirement is that security responsibilities remain enforceable independently of probabilistic model reasoning.</p>
+
+<hr />
+
+<h1 id="reference-architecture">Reference Architecture</h1>
+
+<p>A production implementation can therefore be represented as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌──────────────────────┐
+                    │      PRINCIPAL       │
+                    │ User / Service / App │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │  INGRESS FIREWALL    │
+                    │                      │
+                    │ Normalize            │
+                    │ Classify             │
+                    │ Inspect              │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   POLICY GATEWAY     │
+                    │                      │
+                    │ Identity             │
+                    │ Authorization        │
+                    │ Capability           │
+                    │ Risk policy          │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    AGENT / LLM       │
+                    │                      │
+                    │ Reason               │
+                    │ Plan                 │
+                    │ Propose              │
+                    └──────────┬───────────┘
+                               │
+                         Proposed Action
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │  EXECUTION CONTROL   │
+                    │                      │
+                    │ MicroVM              │
+                    │ Network              │
+                    │ Filesystem           │
+                    │ Credentials          │
+                    │ Resource limits      │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │     HITL GATE        │
+                    │                      │
+                    │ Allow                │
+                    │ Deny                 │
+                    │ Escalate             │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   TARGET SYSTEM      │
+                    │                      │
+                    │ API / DB / SaaS /    │
+                    │ Infrastructure       │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ FORENSIC TELEMETRY  │
+                    │                      │
+                    │ Trace                │
+                    │ Record               │
+                    │ Correlate            │
+                    │ Preserve             │
+                    └──────────────────────┘
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="architectural-objective">Architectural Objective</h1>
+
+<p>AZTA is designed to make agentic execution <strong>governable</strong>.</p>
+
+<p>The architecture does not attempt to make the language model deterministic.</p>
+
+<p>Instead, it establishes deterministic boundaries around the model.</p>
+
+<p>The resulting security model can be summarized as:</p>
+
+<blockquote>
+  <p><strong>Untrusted reasoning. Deterministic policy. Contained execution. Explicit authorization. Verifiable evidence.</strong></p>
+</blockquote>
+
+<p>These principles form the architectural foundation for the AZTA enforcement layers, specification, security controls, and compliance mappings.</p>
+
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/developer-docs/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Developer Documentation</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Developer Documentation</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Technical documentation, guides, references, and engineering articles.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

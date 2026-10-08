@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.9.1 -->
+<title>AZTA Execution Model | Developer Documentation</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="AZTA Execution Model" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Technical documentation, guides, references, and engineering articles." />
+<meta name="twitter:description" property="og:description" content="Technical documentation, guides, references, and engineering articles." />
+<link rel="canonical" href="https://agenticmotion.github.io/developer-docs/docs/azta/execution-model/" />
+<meta property="og:url" content="https://agenticmotion.github.io/developer-docs/docs/azta/execution-model/" />
+<meta property="og:site_name" content="Developer Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="AZTA Execution Model" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Technical documentation, guides, references, and engineering articles.","headline":"AZTA Execution Model","url":"https://agenticmotion.github.io/developer-docs/docs/azta/execution-model/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/developer-docs/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://agenticmotion.github.io/developer-docs/feed.xml" title="Developer Documentation" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/developer-docs/">Developer Documentation</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/developer-docs/docs/azta/architecture/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/audit-schema/">AZTA Audit Event Schema</a><a class="page-link" href="/developer-docs/docs/azta/enforcement-layers/">AZTA Enforcement Layers</a><a class="page-link" href="/developer-docs/docs/azta/execution-model/">AZTA Execution Model</a><a class="page-link" href="/developer-docs/docs/azta/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/">AZTA Specification</a><a class="page-link" href="/developer-docs/">Developer Documentation</a><a class="page-link" href="/developer-docs/docs/security/">AZTA Security</a><a class="page-link" href="/developer-docs/docs/">AZTA Documentation</a><a class="page-link" href="/developer-docs/docs/reference/">AZTA Reference</a><a class="page-link" href="/developer-docs/docs/compliance/">AZTA Compliance</a><a class="page-link" href="/developer-docs/docs/azta/threat-model/">AZTA Threat Model</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <h1 id="azta-execution-model">AZTA Execution Model</h1>
+
+<p>The AZTA execution model defines how AI-agent activity moves through security boundaries from initial request to completed operation and recorded evidence.</p>
+
+<p>The central principle is:</p>
+
+<blockquote>
+  <p><strong>Reasoning produces intent. Policy produces authorization. Execution produces effects. Telemetry produces evidence.</strong></p>
+</blockquote>
+
+<p>An LLM may determine what it believes should happen.</p>
+
+<p>It does not determine whether that action is authorized to happen.</p>
+
+<hr />
+
+<h1 id="execution-lifecycle">Execution Lifecycle</h1>
+
+<p>A complete AZTA execution can be represented as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>REQUEST
+   │
+   ▼
+INGRESS
+   │
+   ▼
+NORMALIZE / CLASSIFY
+   │
+   ▼
+IDENTITY + CONTEXT
+   │
+   ▼
+POLICY ADMISSION
+   │
+   ├──────── DENY ───────────────► TERMINATE
+   │
+   └──────── ALLOW ─────────────► AGENT EXECUTION
+                                      │
+                                      ▼
+                                  REASONING
+                                      │
+                                      ▼
+                               ACTION PROPOSAL
+                                      │
+                                      ▼
+                              POLICY EVALUATION
+                                      │
+                       ┌──────────────┼──────────────┐
+                       │              │              │
+                     DENY           ALLOW       APPROVAL
+                       │              │              │
+                       ▼              │              ▼
+                    STOP             │          HUMAN REVIEW
+                                      │              │
+                                      │        ┌─────┴─────┐
+                                      │      APPROVE      DENY
+                                      │        │            │
+                                      └────────┤            │
+                                               ▼            ▼
+                                           EXECUTE         STOP
+                                               │
+                                               ▼
+                                          TARGET SYSTEM
+                                               │
+                                               ▼
+                                        RESULT / EFFECT
+                                               │
+                                               ▼
+                                          TELEMETRY
+                                               │
+                                               ▼
+                                            CLOSE
+</code></pre></div></div>
+
+<p>The lifecycle is intentionally different from a conventional application call path.</p>
+
+<p>The model generates a proposed action, but independent controls determine whether the action can produce an external effect.</p>
+
+<hr />
+
+<h1 id="1-request-creation">1. Request Creation</h1>
+
+<p>An execution begins with an external or internal event.</p>
+
+<p>Possible sources include:</p>
+
+<ul>
+  <li>human users</li>
+  <li>applications</li>
+  <li>API requests</li>
+  <li>scheduled jobs</li>
+  <li>webhooks</li>
+  <li>external agents</li>
+  <li>automated workflows</li>
+  <li>system events</li>
+</ul>
+
+<p>A request should receive a correlation identifier early in its lifecycle.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"request_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"req-example-001"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"application"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user@example"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tenant"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tenant-example"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"received_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-01T00:00:00Z"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>This example is illustrative and is not the normative AZTA audit schema.</p>
+
+<p>The request identifier allows downstream events to be associated with the originating operation.</p>
+
+<hr />
+
+<h1 id="2-ingress-processing">2. Ingress Processing</h1>
+
+<p>The request enters the Ingress Semantic Firewall.</p>
+
+<p>The ingress layer establishes the initial security context and evaluates whether the request is suitable for agent processing.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>External Input
+      │
+      ▼
+┌─────────────────────┐
+│ Normalize           │
+│ Validate            │
+│ Classify            │
+│ Inspect             │
+└──────────┬──────────┘
+           │
+           ├── REJECT
+           │
+           └── ACCEPT
+                  │
+                  ▼
+             Agent System
+</code></pre></div></div>
+
+<p>The ingress layer should distinguish between:</p>
+
+<ul>
+  <li>instructions</li>
+  <li>data</li>
+  <li>metadata</li>
+  <li>identity information</li>
+  <li>retrieved content</li>
+  <li>tool-generated content</li>
+</ul>
+
+<p>This distinction reduces the likelihood that untrusted data will automatically become trusted instructions.</p>
+
+<hr />
+
+<h1 id="3-identity-resolution">3. Identity Resolution</h1>
+
+<p>Before an operation can be authorized, the system must establish the relevant security principal.</p>
+
+<p>Depending on the deployment, this may include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Human Principal
+       │
+       ▼
+Application Identity
+       │
+       ▼
+Agent Identity
+       │
+       ▼
+Execution Identity
+</code></pre></div></div>
+
+<p>These identities should not be assumed to be interchangeable.</p>
+
+<p>For example, the fact that a human user has access to a resource does not automatically mean that every agent acting on that user’s behalf should receive unrestricted access to the same resource.</p>
+
+<p>Authorization should account for the actual execution principal and delegated authority.</p>
+
+<hr />
+
+<h1 id="4-context-construction">4. Context Construction</h1>
+
+<p>The policy decision requires more than a raw action string.</p>
+
+<p>A security context may include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Principal
+Agent
+Tenant
+Capability
+Target
+Operation
+Environment
+Risk
+Resource sensitivity
+Session
+Policy version
+Execution constraints
+Approval state
+</code></pre></div></div>
+
+<p>The exact representation is implementation-specific.</p>
+
+<p>The important property is that authorization decisions are based on explicit security context rather than implicit assumptions inside the model.</p>
+
+<hr />
+
+<h1 id="5-admission-policy">5. Admission Policy</h1>
+
+<p>The first policy decision determines whether the agent execution itself is permitted.</p>
+
+<p>Possible outcomes include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ALLOW
+DENY
+REQUIRE_ADDITIONAL_CONTROL
+</code></pre></div></div>
+
+<p>Admission controls may consider:</p>
+
+<ul>
+  <li>principal status</li>
+  <li>agent identity</li>
+  <li>tenant status</li>
+  <li>environment</li>
+  <li>requested capabilities</li>
+  <li>policy state</li>
+  <li>system availability</li>
+  <li>risk conditions</li>
+</ul>
+
+<p>An execution that cannot satisfy admission policy should not proceed merely because the model can technically process the request.</p>
+
+<hr />
+
+<h1 id="6-agent-reasoning">6. Agent Reasoning</h1>
+
+<p>Once execution has been admitted, the agent can perform its reasoning process.</p>
+
+<p>The agent may:</p>
+
+<ul>
+  <li>interpret the request</li>
+  <li>retrieve information</li>
+  <li>generate a plan</li>
+  <li>reason over context</li>
+  <li>select candidate tools</li>
+  <li>construct parameters</li>
+  <li>determine an execution sequence</li>
+</ul>
+
+<p>The reasoning process remains probabilistic.</p>
+
+<p>AZTA does not attempt to make the model itself a deterministic security mechanism.</p>
+
+<p>Instead, model output becomes an input to deterministic enforcement.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             AGENT
+               │
+        ┌──────┴──────┐
+        │             │
+      Reason        Plan
+        │             │
+        └──────┬──────┘
+               │
+               ▼
+        Proposed Action
+               │
+               ▼
+       External Policy
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="7-action-proposal">7. Action Proposal</h1>
+
+<p>Before a consequential operation produces an external effect, the agent’s proposed action should be represented in a form that downstream controls can evaluate.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Action Proposal
+├── Principal
+├── Agent
+├── Capability
+├── Target
+├── Operation
+├── Parameters
+├── Context
+└── Risk metadata
+</code></pre></div></div>
+
+<p>The proposal is not an authorization.</p>
+
+<p>For example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Agent:
+"Update ticket 12345 with the following content."
+</code></pre></div></div>
+
+<p>means:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PROPOSED ACTION
+</code></pre></div></div>
+
+<p>It does not mean:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AUTHORIZED ACTION
+</code></pre></div></div>
+
+<p>The distinction is fundamental to AZTA.</p>
+
+<hr />
+
+<h1 id="8-action-level-policy-evaluation">8. Action-Level Policy Evaluation</h1>
+
+<p>The proposed action is evaluated independently of the model.</p>
+
+<p>A conceptual policy function is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>authorize(
+    principal,
+    agent,
+    capability,
+    target,
+    operation,
+    context
+)
+</code></pre></div></div>
+
+<p>The policy engine returns a deterministic decision.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             ACTION
+               │
+               ▼
+       ┌─────────────────┐
+       │ Policy Gateway  │
+       └────────┬────────┘
+                │
+        ┌───────┼────────┐
+        │       │        │
+        ▼       ▼        ▼
+      ALLOW   DENY    APPROVAL
+        │       │        │
+        │       │        ▼
+        │       │     HITL Gate
+        │       │        │
+        │       │    ┌───┴───┐
+        │       │    ▼       ▼
+        │       │ APPROVE   DENY
+        │       │    │       │
+        └───────┴────┘       │
+                │             │
+                ▼             ▼
+             EXECUTE         STOP
+</code></pre></div></div>
+
+<p>No model-generated instruction should be able to bypass this decision.</p>
+
+<hr />
+
+<h1 id="9-capability-verification">9. Capability Verification</h1>
+
+<p>An action should be evaluated against the capabilities actually granted to the execution.</p>
+
+<p>For example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Agent capability:
+ticket.read
+</code></pre></div></div>
+
+<p>does not automatically imply:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ticket.update
+</code></pre></div></div>
+
+<p>Likewise:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>database.read
+</code></pre></div></div>
+
+<p>does not automatically imply:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>database.delete
+</code></pre></div></div>
+
+<p>Capabilities should be narrowly scoped where practical.</p>
+
+<p>Scope can include:</p>
+
+<ul>
+  <li>operation</li>
+  <li>resource</li>
+  <li>tenant</li>
+  <li>environment</li>
+  <li>time</li>
+  <li>quantity</li>
+  <li>network destination</li>
+  <li>data classification</li>
+</ul>
+
+<p>The objective is to reduce unnecessary authority.</p>
+
+<hr />
+
+<h1 id="10-execution-admission">10. Execution Admission</h1>
+
+<p>After policy authorization, the operation enters the execution boundary.</p>
+
+<p>The execution environment should enforce the constraints established by the control plane.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Policy Decision
+      │
+      ▼
+Execution Admission
+      │
+      ├── Runtime identity
+      ├── Capabilities
+      ├── Network policy
+      ├── Filesystem policy
+      ├── Resource limits
+      └── Execution lifetime
+      │
+      ▼
+Controlled Runtime
+</code></pre></div></div>
+
+<p>The execution environment should not silently expand the authority granted by policy.</p>
+
+<hr />
+
+<h1 id="11-ephemeral-execution">11. Ephemeral Execution</h1>
+
+<p>Where isolation requirements justify it, the operation executes inside an ephemeral runtime.</p>
+
+<p>A conceptual lifecycle is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Provision
+   │
+   ▼
+Configure
+   │
+   ▼
+Verify Controls
+   │
+   ▼
+Execute
+   │
+   ▼
+Capture Result
+   │
+   ▼
+Terminate
+   │
+   ▼
+Destroy
+</code></pre></div></div>
+
+<p>Ephemeral execution helps reduce persistence between executions.</p>
+
+<p>Potential controls include:</p>
+
+<ul>
+  <li>restricted filesystem</li>
+  <li>isolated network</li>
+  <li>limited process privileges</li>
+  <li>resource quotas</li>
+  <li>execution timeouts</li>
+  <li>controlled credentials</li>
+  <li>restricted tool access</li>
+</ul>
+
+<p>The exact runtime mechanism is implementation-specific.</p>
+
+<hr />
+
+<h1 id="12-human-authorization">12. Human Authorization</h1>
+
+<p>Some operations require a human decision.</p>
+
+<p>When policy returns:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>REQUIRE_APPROVAL
+</code></pre></div></div>
+
+<p>the execution should enter a controlled pending state.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Action Proposal
+      │
+      ▼
+Policy Gateway
+      │
+      ▼
+REQUIRE_APPROVAL
+      │
+      ▼
+Execution Paused
+      │
+      ▼
+Approval Request
+      │
+      ├── APPROVED ──► Resume
+      │
+      ├── DENIED ────► Terminate
+      │
+      └── EXPIRED ───► Policy-defined outcome
+</code></pre></div></div>
+
+<p>The model cannot approve its own request.</p>
+
+<p>The approval event must originate from the designated authorization mechanism.</p>
+
+<hr />
+
+<h1 id="13-external-effect">13. External Effect</h1>
+
+<p>Only after all applicable controls have succeeded should the operation produce an external effect.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>creating or modifying a record</li>
+  <li>sending a message</li>
+  <li>executing infrastructure changes</li>
+  <li>writing to a database</li>
+  <li>invoking an external API</li>
+  <li>changing permissions</li>
+  <li>initiating a financial operation</li>
+</ul>
+
+<p>The target system should ideally provide its own authentication and authorization controls as an additional security boundary.</p>
+
+<p>AZTA does not replace downstream system security.</p>
+
+<p>It provides an additional control plane around agentic behavior.</p>
+
+<hr />
+
+<h1 id="14-result-handling">14. Result Handling</h1>
+
+<p>The target system returns a result.</p>
+
+<p>That result may contain:</p>
+
+<ul>
+  <li>success</li>
+  <li>failure</li>
+  <li>partial completion</li>
+  <li>validation error</li>
+  <li>authorization failure</li>
+  <li>timeout</li>
+  <li>unexpected response</li>
+  <li>external state</li>
+</ul>
+
+<p>Tool output should continue to be treated according to its trust classification.</p>
+
+<p>A successful tool call does not automatically make returned content trustworthy as instructions.</p>
+
+<hr />
+
+<h1 id="15-telemetry-and-evidence">15. Telemetry and Evidence</h1>
+
+<p>Security-relevant events should be recorded throughout the execution lifecycle.</p>
+
+<p>At minimum, implementations should be capable of correlating:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Request
+  │
+  ├── Identity
+  │
+  ├── Agent
+  │
+  ├── Policy Decision
+  │
+  ├── Action Proposal
+  │
+  ├── Tool Invocation
+  │
+  ├── Runtime
+  │
+  ├── Approval
+  │
+  ├── External Effect
+  │
+  └── Result
+</code></pre></div></div>
+
+<p>The Forensic Telemetry Engine provides the evidence necessary to reconstruct this sequence.</p>
+
+<p>The detailed event representation belongs to the AZTA audit schema.</p>
+
+<hr />
+
+<h1 id="16-execution-closure">16. Execution Closure</h1>
+
+<p>An execution should have an explicit terminal state.</p>
+
+<p>Possible states include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>COMPLETED
+DENIED
+REJECTED
+FAILED
+CANCELLED
+TIMED_OUT
+TERMINATED
+EXPIRED
+</code></pre></div></div>
+
+<p>Implementations may define additional states.</p>
+
+<p>The final state should be correlated with the originating execution and its security decisions.</p>
+
+<hr />
+
+<h1 id="state-machine">State Machine</h1>
+
+<p>The complete lifecycle can be represented as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                 ┌──────────────┐
+                 │   RECEIVED   │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │  INSPECTED   │
+                 └──────┬───────┘
+                        │
+                  ┌─────┴─────┐
+                  │           │
+                  ▼           ▼
+               REJECT       ADMIT
+                  │           │
+                  ▼           ▼
+                STOP       REASON
+                              │
+                              ▼
+                         PROPOSE ACTION
+                              │
+                              ▼
+                       POLICY EVALUATION
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+              ▼               ▼               ▼
+            DENY           ALLOW          APPROVAL
+              │               │               │
+              ▼               │         ┌─────┴─────┐
+            STOP              │         │           │
+                              │      APPROVE      DENY
+                              │         │           │
+                              └────┬────┘           │
+                                   │                │
+                                   ▼                ▼
+                              EXECUTION           STOP
+                                   │
+                                   ▼
+                               EFFECT
+                                   │
+                                   ▼
+                                RESULT
+                                   │
+                                   ▼
+                               TELEMETRY
+                                   │
+                                   ▼
+                                 CLOSE
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="re-authorization">Re-Authorization</h1>
+
+<p>Agentic workflows may contain multiple actions.</p>
+
+<p>Authorization should therefore not necessarily be treated as a one-time decision for the entire workflow.</p>
+
+<p>For example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Request
+   │
+   ▼
+Agent Plan
+   │
+   ├── Read customer record
+   │       │
+   │       └── Policy → ALLOW
+   │
+   ├── Modify customer record
+   │       │
+   │       └── Policy → ALLOW / APPROVAL
+   │
+   └── Delete customer record
+           │
+           └── Policy → DENY
+</code></pre></div></div>
+
+<p>Each consequential action can be independently evaluated.</p>
+
+<p>This prevents an initially authorized request from becoming an implicit authorization for every subsequent action generated by the agent.</p>
+
+<hr />
+
+<h1 id="delegation">Delegation</h1>
+
+<p>Agent systems frequently operate through delegated identities or subordinate agents.</p>
+
+<p>Delegation should preserve the authority boundaries established by the original principal.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Principal
+    │
+    │ delegates bounded authority
+    ▼
+Agent
+    │
+    │ proposes bounded action
+    ▼
+Tool / Sub-Agent
+</code></pre></div></div>
+
+<p>A delegated agent should not automatically receive authority greater than the authority available to the delegating principal and execution context.</p>
+
+<p>The exact delegation model is implementation-specific and should be explicitly represented in policy and audit records.</p>
+
+<hr />
+
+<h1 id="credential-boundaries">Credential Boundaries</h1>
+
+<p>Credentials should be separated from model reasoning wherever practical.</p>
+
+<p>A preferred conceptual flow is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Agent
+  │
+  │ requests capability
+  ▼
+Control Plane
+  │
+  │ validates authorization
+  ▼
+Credential / Token Broker
+  │
+  │ issues scoped access
+  ▼
+Tool / Target System
+</code></pre></div></div>
+
+<p>The model does not need unrestricted possession of the underlying credential simply because the agent has permission to perform an operation.</p>
+
+<p>Credential lifetime and scope should be minimized according to deployment requirements.</p>
+
+<hr />
+
+<h1 id="kill-switch-and-termination">Kill Switch and Termination</h1>
+
+<p>An AZTA deployment should provide an administrative mechanism capable of interrupting agent execution.</p>
+
+<p>Potential triggers include:</p>
+
+<ul>
+  <li>active security incident</li>
+  <li>runaway execution</li>
+  <li>policy violation</li>
+  <li>compromised credential</li>
+  <li>anomalous behavior</li>
+  <li>operator intervention</li>
+  <li>infrastructure compromise</li>
+</ul>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             KILL SWITCH
+                  │
+        ┌─────────┼─────────┐
+        ▼         ▼         ▼
+    Stop Agent  Revoke    Isolate
+               Tokens     Runtime
+        │         │         │
+        └─────────┼─────────┘
+                  ▼
+             Record Event
+</code></pre></div></div>
+
+<p>Termination should itself generate telemetry.</p>
+
+<p>A kill switch that cannot be observed or audited reduces the quality of incident reconstruction.</p>
+
+<hr />
+
+<h1 id="replay-and-investigation">Replay and Investigation</h1>
+
+<p>Where sufficient evidence exists, telemetry should allow investigators to reconstruct the relevant execution sequence.</p>
+
+<p>A useful investigation path is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Execution ID
+     │
+     ▼
+Request
+     │
+     ▼
+Identity
+     │
+     ▼
+Policy Decisions
+     │
+     ▼
+Agent Actions
+     │
+     ▼
+Tool Calls
+     │
+     ▼
+Runtime Events
+     │
+     ▼
+Human Decisions
+     │
+     ▼
+External Effects
+     │
+     ▼
+Final State
+</code></pre></div></div>
+
+<p>This does not necessarily imply that an execution can be perfectly reproduced.</p>
+
+<p>The objective is to preserve enough evidence to understand what occurred and why the control plane permitted, denied, interrupted, or terminated the relevant activity.</p>
+
+<hr />
+
+<h1 id="security-properties">Security Properties</h1>
+
+<p>An AZTA execution model should provide the following properties:</p>
+
+<h2 id="authorization-precedes-consequential-execution">Authorization precedes consequential execution</h2>
+
+<p>A proposed operation should not produce an external effect before applicable authorization controls have succeeded.</p>
+
+<h2 id="model-reasoning-does-not-establish-authority">Model reasoning does not establish authority</h2>
+
+<p>Model output is treated as proposed intent rather than proof of permission.</p>
+
+<h2 id="authorization-can-be-action-specific">Authorization can be action-specific</h2>
+
+<p>A workflow can contain multiple policy decisions rather than inheriting unrestricted authority from its initial request.</p>
+
+<h2 id="human-approval-is-external">Human approval is external</h2>
+
+<p>Approval events originate from an authorization mechanism rather than from model output.</p>
+
+<h2 id="execution-is-constrained">Execution is constrained</h2>
+
+<p>The runtime enforces boundaries appropriate to the operation’s risk.</p>
+
+<h2 id="credentials-are-controlled">Credentials are controlled</h2>
+
+<p>Agent access to credentials should be scoped and governed independently of model reasoning.</p>
+
+<h2 id="security-events-are-observable">Security events are observable</h2>
+
+<p>Relevant decisions and execution events produce correlated evidence.</p>
+
+<h2 id="termination-is-possible">Termination is possible</h2>
+
+<p>Authorized operators or automated controls can interrupt execution when required.</p>
+
+<hr />
+
+<h1 id="implementation-contract">Implementation Contract</h1>
+
+<p>An AZTA implementation should document the following for every execution path:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Requirement</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Principal</td>
+      <td>Who or what initiated the operation</td>
+    </tr>
+    <tr>
+      <td>Agent</td>
+      <td>Which agent performed the reasoning</td>
+    </tr>
+    <tr>
+      <td>Capability</td>
+      <td>What authority was requested</td>
+    </tr>
+    <tr>
+      <td>Target</td>
+      <td>Which resource or system was affected</td>
+    </tr>
+    <tr>
+      <td>Operation</td>
+      <td>What action was proposed</td>
+    </tr>
+    <tr>
+      <td>Policy</td>
+      <td>Which policy governed the decision</td>
+    </tr>
+    <tr>
+      <td>Decision</td>
+      <td>Allow, deny, approval, or implementation-defined state</td>
+    </tr>
+    <tr>
+      <td>Runtime</td>
+      <td>Where execution occurred</td>
+    </tr>
+    <tr>
+      <td>Approval</td>
+      <td>Whether human authorization was required</td>
+    </tr>
+    <tr>
+      <td>Effect</td>
+      <td>What external state changed</td>
+    </tr>
+    <tr>
+      <td>Evidence</td>
+      <td>Which telemetry records the lifecycle</td>
+    </tr>
+    <tr>
+      <td>Final State</td>
+      <td>How execution terminated</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This contract provides the bridge between the conceptual AZTA architecture and the machine-readable specification.</p>
+
+<hr />
+
+<h1 id="core-execution-invariant">Core Execution Invariant</h1>
+
+<p>The AZTA execution model can be reduced to five distinct concepts:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>REASON
+  │
+  ▼
+PROPOSE
+  │
+  ▼
+AUTHORIZE
+  │
+  ▼
+EXECUTE
+  │
+  ▼
+PROVE
+</code></pre></div></div>
+
+<p>The separation is intentional.</p>
+
+<blockquote>
+  <p><strong>The agent determines what it wants to do. The control plane determines what it may do. The runtime determines how it is contained. The evidence layer records what happened.</strong></p>
+</blockquote>
+
+<p>This separation is the operational foundation of Agentic Zero Trust Architecture.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/developer-docs/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Developer Documentation</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Developer Documentation</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Technical documentation, guides, references, and engineering articles.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.9.1 -->
+<title>AZTA Threat Model | Developer Documentation</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="AZTA Threat Model" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Technical documentation, guides, references, and engineering articles." />
+<meta name="twitter:description" property="og:description" content="Technical documentation, guides, references, and engineering articles." />
+<link rel="canonical" href="https://agenticmotion.github.io/developer-docs/docs/azta/threat-model/" />
+<meta property="og:url" content="https://agenticmotion.github.io/developer-docs/docs/azta/threat-model/" />
+<meta property="og:site_name" content="Developer Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="AZTA Threat Model" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Technical documentation, guides, references, and engineering articles.","headline":"AZTA Threat Model","url":"https://agenticmotion.github.io/developer-docs/docs/azta/threat-model/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/developer-docs/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://agenticmotion.github.io/developer-docs/feed.xml" title="Developer Documentation" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/developer-docs/">Developer Documentation</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/developer-docs/docs/azta/architecture/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/audit-schema/">AZTA Audit Event Schema</a><a class="page-link" href="/developer-docs/docs/azta/enforcement-layers/">AZTA Enforcement Layers</a><a class="page-link" href="/developer-docs/docs/azta/execution-model/">AZTA Execution Model</a><a class="page-link" href="/developer-docs/docs/azta/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/">AZTA Specification</a><a class="page-link" href="/developer-docs/">Developer Documentation</a><a class="page-link" href="/developer-docs/docs/security/">AZTA Security</a><a class="page-link" href="/developer-docs/docs/">AZTA Documentation</a><a class="page-link" href="/developer-docs/docs/reference/">AZTA Reference</a><a class="page-link" href="/developer-docs/docs/compliance/">AZTA Compliance</a><a class="page-link" href="/developer-docs/docs/azta/threat-model/">AZTA Threat Model</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <h1 id="azta-threat-model">AZTA Threat Model</h1>
+
+<p>The AZTA threat model defines the security assumptions, trust boundaries, attack surfaces, threat scenarios, and control objectives relevant to production AI-agent systems.</p>
+
+<p>AZTA assumes that an agent may be manipulated, misled, compromised, or simply behave incorrectly.</p>
+
+<p>The architecture therefore does not require the model to be trustworthy in order for the surrounding system to remain governed.</p>
+
+<blockquote>
+  <p><strong>Assume the reasoning layer can fail. Design the control plane so that failure remains bounded.</strong></p>
+</blockquote>
+
+<hr />
+
+<h1 id="threat-model-objectives">Threat Model Objectives</h1>
+
+<p>The AZTA threat model is designed to protect:</p>
+
+<ul>
+  <li>identities</li>
+  <li>credentials</li>
+  <li>tools</li>
+  <li>data</li>
+  <li>tenants</li>
+  <li>infrastructure</li>
+  <li>application state</li>
+  <li>security policy</li>
+  <li>human authorization</li>
+  <li>audit evidence</li>
+</ul>
+
+<p>The primary objective is to prevent an agent’s ability to reason or act from becoming unrestricted authority.</p>
+
+<hr />
+
+<h1 id="security-assumptions">Security Assumptions</h1>
+
+<p>AZTA makes several explicit assumptions.</p>
+
+<h2 id="the-model-is-not-a-trusted-security-boundary">The model is not a trusted security boundary</h2>
+
+<p>An LLM can produce incorrect, manipulated, or adversarial output.</p>
+
+<p>Model output is therefore treated as untrusted intent.</p>
+
+<h2 id="external-content-is-untrusted">External content is untrusted</h2>
+
+<p>Information retrieved from external systems can contain malicious instructions, misleading content, poisoned data, or adversarial payloads.</p>
+
+<p>Retrieved content should not automatically become trusted instructions.</p>
+
+<h2 id="tools-can-fail-or-become-compromised">Tools can fail or become compromised</h2>
+
+<p>A tool integration may contain vulnerabilities, return malicious content, expose excessive permissions, or behave unexpectedly.</p>
+
+<h2 id="credentials-can-be-compromised">Credentials can be compromised</h2>
+
+<p>API keys, tokens, sessions, and delegated credentials may be exposed or misused.</p>
+
+<h2 id="users-can-make-malicious-requests">Users can make malicious requests</h2>
+
+<p>Authentication establishes identity.</p>
+
+<p>It does not establish that every requested operation is safe or authorized.</p>
+
+<h2 id="agent-runtimes-can-fail">Agent runtimes can fail</h2>
+
+<p>A compromised process or dependency may attempt to escape its intended execution boundary.</p>
+
+<h2 id="security-controls-can-fail">Security controls can fail</h2>
+
+<p>Policy engines, telemetry systems, approval systems, and other infrastructure may become unavailable or degraded.</p>
+
+<p>AZTA therefore requires explicit failure behavior rather than assuming perfect availability.</p>
+
+<hr />
+
+<h1 id="trust-model">Trust Model</h1>
+
+<p>AZTA distinguishes between components based on their role in security decisions.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    TRUSTED CONTROL PLANE
+                    ─────────────────────
+
+       ┌──────────────────────────────────────┐
+       │ Identity / Authorization             │
+       │ Policy Engine                        │
+       │ Execution Controls                   │
+       │ Approval Mechanism                   │
+       │ Security Administration              │
+       └──────────────────┬───────────────────┘
+                          │
+                          │ governs
+                          ▼
+
+                  UNTRUSTED REASONING
+                  ───────────────────
+
+       ┌──────────────────────────────────────┐
+       │ LLM                                  │
+       │ Agent Planner                        │
+       │ Generated Instructions               │
+       │ Generated Tool Parameters             │
+       │ Retrieved Content                    │
+       └──────────────────┬───────────────────┘
+                          │
+                          │ proposes
+                          ▼
+
+                  CONTROLLED EXECUTION
+                  ─────────────────────
+
+       ┌──────────────────────────────────────┐
+       │ Sandbox                              │
+       │ Tool Adapters                        │
+       │ External Systems                     │
+       └──────────────────┬───────────────────┘
+                          │
+                          ▼
+
+                  FORENSIC EVIDENCE
+                  ─────────────────
+
+       ┌──────────────────────────────────────┐
+       │ Telemetry                            │
+       │ Audit Records                        │
+       │ Security Events                      │
+       └──────────────────────────────────────┘
+</code></pre></div></div>
+
+<p>The exact trust classification of a component depends on its implementation and deployment.</p>
+
+<p>The architectural distinction is that <strong>security authority should remain outside probabilistic reasoning</strong>.</p>
+
+<hr />
+
+<h1 id="attack-surface">Attack Surface</h1>
+
+<p>An agentic system exposes more than a traditional request/response application.</p>
+
+<p>Relevant attack surfaces include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌──────────────────────────────────────────────────────┐
+│                    ATTACK SURFACES                    │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│  User Input                                           │
+│       │                                               │
+│       ├── Prompt Injection                             │
+│       ├── Social Engineering                          │
+│       └── Privilege Abuse                             │
+│                                                      │
+│  Retrieved Content                                    │
+│       │                                               │
+│       ├── Indirect Prompt Injection                   │
+│       ├── Data Poisoning                              │
+│       └── Malicious Instructions                      │
+│                                                      │
+│  Model Output                                         │
+│       │                                               │
+│       ├── Unsafe Tool Selection                       │
+│       ├── Incorrect Parameters                        │
+│       └── Policy Evasion                              │
+│                                                      │
+│  Tool Layer                                           │
+│       │                                               │
+│       ├── Excessive Privilege                         │
+│       ├── Tool Confusion                              │
+│       └── Malicious / Compromised Tool               │
+│                                                      │
+│  Identity                                             │
+│       │                                               │
+│       ├── Credential Theft                            │
+│       ├── Token Abuse                                 │
+│       └── Delegation Abuse                            │
+│                                                      │
+│  Runtime                                              │
+│       │                                               │
+│       ├── Sandbox Escape                              │
+│       ├── Resource Exhaustion                         │
+│       └── Persistence                                 │
+│                                                      │
+│  External Systems                                     │
+│       │                                               │
+│       ├── Unauthorized State Mutation                 │
+│       ├── Data Exfiltration                           │
+│       └── Cascading Actions                           │
+│                                                      │
+│  Telemetry                                            │
+│       │                                               │
+│       ├── Evidence Manipulation                       │
+│       ├── Data Leakage                                │
+│       └── Insufficient Visibility                     │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="threat-categories">Threat Categories</h1>
+
+<p>AZTA organizes threats around the point at which unauthorized behavior can enter or propagate through the system.</p>
+
+<h2 id="t1--malicious-or-manipulated-input">T1 — Malicious or Manipulated Input</h2>
+
+<p>An attacker supplies instructions designed to cause the agent to violate intended policy.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>direct prompt injection</li>
+  <li>malicious user instructions</li>
+  <li>instruction hierarchy manipulation</li>
+  <li>attempts to override system controls</li>
+  <li>requests designed to induce unsafe tool use</li>
+</ul>
+
+<h3 id="primary-controls">Primary Controls</h3>
+
+<ul>
+  <li>Ingress Semantic Firewall</li>
+  <li>Deterministic Policy Gateway</li>
+  <li>capability restrictions</li>
+  <li>action-level authorization</li>
+  <li>telemetry</li>
+</ul>
+
+<hr />
+
+<h1 id="t2--indirect-prompt-injection">T2 — Indirect Prompt Injection</h1>
+
+<p>Untrusted instructions enter through content the agent retrieves or processes rather than through the original user request.</p>
+
+<p>Potential sources include:</p>
+
+<ul>
+  <li>webpages</li>
+  <li>documents</li>
+  <li>email</li>
+  <li>support tickets</li>
+  <li>repositories</li>
+  <li>databases</li>
+  <li>tool responses</li>
+  <li>external APIs</li>
+</ul>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>External Content
+      │
+      ▼
+Retrieved by Agent
+      │
+      ▼
+Malicious Instruction
+      │
+      ▼
+Model interprets content
+      │
+      ▼
+Unsafe Action Proposal
+      │
+      ▼
+Policy Gateway
+      │
+      ├── DENY
+      │
+      └── ALLOW / APPROVAL
+</code></pre></div></div>
+
+<p>The important security property is that successful manipulation of the model does not automatically authorize the resulting action.</p>
+
+<h3 id="primary-controls-1">Primary Controls</h3>
+
+<ul>
+  <li>semantic input inspection</li>
+  <li>trust classification</li>
+  <li>tool-output handling</li>
+  <li>action-level policy</li>
+  <li>least-privilege capabilities</li>
+  <li>HITL controls</li>
+</ul>
+
+<hr />
+
+<h1 id="t3--excessive-agent-authority">T3 — Excessive Agent Authority</h1>
+
+<p>An agent receives more permissions than are necessary to complete its task.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>unrestricted database access</li>
+  <li>broad filesystem access</li>
+  <li>production credentials</li>
+  <li>unrestricted network access</li>
+  <li>permission to modify unrelated tenants</li>
+  <li>administrative API access</li>
+</ul>
+
+<h3 id="primary-controls-2">Primary Controls</h3>
+
+<ul>
+  <li>capability-based authorization</li>
+  <li>scoped identities</li>
+  <li>policy gateway</li>
+  <li>credential broker</li>
+  <li>runtime restrictions</li>
+  <li>tenant isolation</li>
+</ul>
+
+<hr />
+
+<h1 id="t4--confused-deputy">T4 — Confused Deputy</h1>
+
+<p>A less-privileged or compromised agent causes a more privileged component to perform an operation on its behalf.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Attacker
+   │
+   ▼
+Low-Privilege Agent
+   │
+   │ malicious request
+   ▼
+Privileged Tool
+   │
+   ▼
+Sensitive Resource
+</code></pre></div></div>
+
+<p>The privileged tool may incorrectly trust the agent simply because the request originated from an internal component.</p>
+
+<h3 id="primary-controls-3">Primary Controls</h3>
+
+<ul>
+  <li>explicit principal identity</li>
+  <li>capability validation</li>
+  <li>delegated authority constraints</li>
+  <li>target-specific authorization</li>
+  <li>policy evaluation at the point of action</li>
+</ul>
+
+<p>The existence of an internal network relationship should not itself constitute authorization.</p>
+
+<hr />
+
+<h1 id="t5--credential-and-token-abuse">T5 — Credential and Token Abuse</h1>
+
+<p>An attacker obtains or misuses credentials available to an agent.</p>
+
+<p>Potential consequences include:</p>
+
+<ul>
+  <li>unauthorized API access</li>
+  <li>privilege escalation</li>
+  <li>cross-tenant access</li>
+  <li>persistence</li>
+  <li>data exfiltration</li>
+  <li>infrastructure compromise</li>
+</ul>
+
+<h3 id="primary-controls-4">Primary Controls</h3>
+
+<ul>
+  <li>short-lived credentials</li>
+  <li>scoped tokens</li>
+  <li>credential isolation</li>
+  <li>external authorization</li>
+  <li>token revocation</li>
+  <li>execution-specific identities</li>
+  <li>telemetry</li>
+</ul>
+
+<p>Credentials should be treated as security-sensitive assets rather than ordinary model context.</p>
+
+<hr />
+
+<h1 id="t6--tool-abuse">T6 — Tool Abuse</h1>
+
+<p>An agent invokes a legitimate tool in an unsafe or unintended way.</p>
+
+<p>Examples include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read → acceptable
+write → potentially sensitive
+delete → high impact
+execute → potentially privileged
+</code></pre></div></div>
+
+<p>The fact that a tool is available does not imply that every operation exposed by the tool is authorized.</p>
+
+<h3 id="primary-controls-5">Primary Controls</h3>
+
+<ul>
+  <li>tool allowlists</li>
+  <li>capability-based access</li>
+  <li>parameter validation</li>
+  <li>policy evaluation</li>
+  <li>risk classification</li>
+  <li>human approval</li>
+  <li>execution isolation</li>
+</ul>
+
+<hr />
+
+<h1 id="t7--unauthorized-state-mutation">T7 — Unauthorized State Mutation</h1>
+
+<p>An agent modifies an external system without sufficient authorization.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>deleting records</li>
+  <li>modifying customer data</li>
+  <li>changing access permissions</li>
+  <li>deploying infrastructure</li>
+  <li>altering configuration</li>
+  <li>sending messages</li>
+  <li>initiating transactions</li>
+</ul>
+
+<h3 id="primary-controls-6">Primary Controls</h3>
+
+<ul>
+  <li>deterministic authorization</li>
+  <li>target-specific policy</li>
+  <li>action-level re-authorization</li>
+  <li>HITL approval</li>
+  <li>downstream authorization</li>
+  <li>telemetry</li>
+</ul>
+
+<hr />
+
+<h1 id="t8--cross-tenant-data-exposure">T8 — Cross-Tenant Data Exposure</h1>
+
+<p>An agent accesses or modifies information belonging to another tenant.</p>
+
+<p>This can result from:</p>
+
+<ul>
+  <li>incorrect identity propagation</li>
+  <li>insufficient authorization</li>
+  <li>retrieval-layer leakage</li>
+  <li>shared credentials</li>
+  <li>confused-deputy behavior</li>
+  <li>improper caching</li>
+  <li>broad tool permissions</li>
+</ul>
+
+<h3 id="primary-controls-7">Primary Controls</h3>
+
+<ul>
+  <li>tenant-bound identity</li>
+  <li>tenant-aware policy</li>
+  <li>resource-level authorization</li>
+  <li>isolated execution</li>
+  <li>scoped credentials</li>
+  <li>telemetry correlation</li>
+</ul>
+
+<p>Tenant identity should be treated as an authorization attribute rather than merely an application metadata field.</p>
+
+<hr />
+
+<h1 id="t9--runtime-compromise">T9 — Runtime Compromise</h1>
+
+<p>An attacker or malicious workload compromises the execution environment.</p>
+
+<p>Potential consequences include:</p>
+
+<ul>
+  <li>filesystem access</li>
+  <li>credential theft</li>
+  <li>lateral movement</li>
+  <li>network abuse</li>
+  <li>persistence</li>
+  <li>host compromise</li>
+  <li>resource exhaustion</li>
+</ul>
+
+<h3 id="primary-controls-8">Primary Controls</h3>
+
+<ul>
+  <li>ephemeral execution</li>
+  <li>MicroVM or equivalent isolation</li>
+  <li>filesystem restrictions</li>
+  <li>network policy</li>
+  <li>resource quotas</li>
+  <li>execution timeouts</li>
+  <li>credential isolation</li>
+  <li>runtime telemetry</li>
+</ul>
+
+<hr />
+
+<h1 id="t10--runaway-or-recursive-execution">T10 — Runaway or Recursive Execution</h1>
+
+<p>An agent enters an unintended execution loop or generates excessive activity.</p>
+
+<p>Potential causes include:</p>
+
+<ul>
+  <li>recursive tool invocation</li>
+  <li>uncontrolled retries</li>
+  <li>agent-to-agent loops</li>
+  <li>malformed planning</li>
+  <li>unexpected external responses</li>
+  <li>resource exhaustion</li>
+</ul>
+
+<p>Potential consequences include:</p>
+
+<ul>
+  <li>excessive API usage</li>
+  <li>infrastructure exhaustion</li>
+  <li>financial cost</li>
+  <li>data mutation</li>
+  <li>cascading failures</li>
+</ul>
+
+<h3 id="primary-controls-9">Primary Controls</h3>
+
+<ul>
+  <li>execution budgets</li>
+  <li>timeouts</li>
+  <li>rate limits</li>
+  <li>step limits</li>
+  <li>resource quotas</li>
+  <li>policy enforcement</li>
+  <li>runtime termination</li>
+  <li>kill switch</li>
+</ul>
+
+<hr />
+
+<h1 id="t11--human-approval-manipulation">T11 — Human Approval Manipulation</h1>
+
+<p>An attacker attempts to cause an approver to authorize an unsafe operation.</p>
+
+<p>Potential techniques include:</p>
+
+<ul>
+  <li>misleading summaries</li>
+  <li>omitted context</li>
+  <li>urgency manipulation</li>
+  <li>incomplete risk information</li>
+  <li>deceptive action descriptions</li>
+</ul>
+
+<h3 id="primary-controls-10">Primary Controls</h3>
+
+<p>Approval interfaces should expose relevant security context, including where appropriate:</p>
+
+<ul>
+  <li>principal</li>
+  <li>agent</li>
+  <li>target</li>
+  <li>operation</li>
+  <li>requested capability</li>
+  <li>risk classification</li>
+  <li>affected resources</li>
+  <li>policy requiring approval</li>
+  <li>expected consequence</li>
+</ul>
+
+<p>The approval mechanism should not rely solely on model-generated descriptions when independent information is available.</p>
+
+<hr />
+
+<h1 id="t12--policy-bypass">T12 — Policy Bypass</h1>
+
+<p>An agent, tool, integration, or administrator attempts to circumvent the deterministic policy boundary.</p>
+
+<p>Examples include:</p>
+
+<ul>
+  <li>direct access to a protected API</li>
+  <li>alternate tool paths</li>
+  <li>hidden credentials</li>
+  <li>unauthorized service accounts</li>
+  <li>bypassing the policy gateway</li>
+  <li>modifying policy without authorization</li>
+</ul>
+
+<h3 id="primary-controls-11">Primary Controls</h3>
+
+<ul>
+  <li>centralized authorization</li>
+  <li>network segmentation</li>
+  <li>deny-by-default pathways</li>
+  <li>protected policy configuration</li>
+  <li>administrative access controls</li>
+  <li>policy change telemetry</li>
+  <li>downstream authorization</li>
+</ul>
+
+<p>The policy gateway is only meaningful if protected resources cannot routinely be accessed through an alternate uncontrolled path.</p>
+
+<hr />
+
+<h1 id="t13--telemetry-manipulation">T13 — Telemetry Manipulation</h1>
+
+<p>An attacker attempts to prevent or alter evidence of malicious activity.</p>
+
+<p>Potential methods include:</p>
+
+<ul>
+  <li>deleting logs</li>
+  <li>modifying records</li>
+  <li>disabling telemetry</li>
+  <li>altering timestamps</li>
+  <li>breaking correlation</li>
+  <li>compromising the logging destination</li>
+</ul>
+
+<h3 id="primary-controls-12">Primary Controls</h3>
+
+<ul>
+  <li>append-only storage</li>
+  <li>immutable retention</li>
+  <li>integrity mechanisms</li>
+  <li>independent storage boundaries</li>
+  <li>access controls</li>
+  <li>telemetry health monitoring</li>
+  <li>administrative audit events</li>
+</ul>
+
+<p>Security evidence should be protected independently from the workload generating it where practical.</p>
+
+<hr />
+
+<h1 id="t14--sensitive-data-leakage">T14 — Sensitive Data Leakage</h1>
+
+<p>Agent activity exposes sensitive information to unauthorized destinations.</p>
+
+<p>Potential leakage channels include:</p>
+
+<ul>
+  <li>model context</li>
+  <li>tool parameters</li>
+  <li>tool responses</li>
+  <li>logs</li>
+  <li>telemetry</li>
+  <li>network requests</li>
+  <li>generated files</li>
+  <li>external APIs</li>
+</ul>
+
+<h3 id="primary-controls-13">Primary Controls</h3>
+
+<ul>
+  <li>data classification</li>
+  <li>authorization</li>
+  <li>minimization</li>
+  <li>output controls</li>
+  <li>network restrictions</li>
+  <li>credential isolation</li>
+  <li>telemetry access controls</li>
+  <li>retention policies</li>
+</ul>
+
+<p>Not every piece of model context should automatically be available to every tool.</p>
+
+<hr />
+
+<h1 id="t15--policy-and-configuration-tampering">T15 — Policy and Configuration Tampering</h1>
+
+<p>An attacker changes the controls governing agent behavior.</p>
+
+<p>Potential targets include:</p>
+
+<ul>
+  <li>authorization rules</li>
+  <li>tool policies</li>
+  <li>runtime restrictions</li>
+  <li>approval requirements</li>
+  <li>tenant configuration</li>
+  <li>telemetry configuration</li>
+  <li>credential policies</li>
+</ul>
+
+<h3 id="primary-controls-14">Primary Controls</h3>
+
+<ul>
+  <li>administrative authorization</li>
+  <li>version-controlled policy</li>
+  <li>change review</li>
+  <li>integrity protection</li>
+  <li>policy versioning</li>
+  <li>configuration telemetry</li>
+  <li>separation of duties where appropriate</li>
+</ul>
+
+<p>A security control must itself have a security boundary.</p>
+
+<hr />
+
+<h1 id="threat-propagation">Threat Propagation</h1>
+
+<p>A key AZTA concern is preventing a compromise in one component from propagating into unrestricted authority.</p>
+
+<p>For example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Malicious Document
+       │
+       ▼
+Prompt Injection
+       │
+       ▼
+Compromised Model Reasoning
+       │
+       ▼
+Unsafe Tool Proposal
+       │
+       ▼
+Policy Gateway
+       │
+       ├──────── DENY
+       │
+       ▼
+Contained Runtime
+       │
+       ▼
+HITL Requirement
+       │
+       ├──────── DENY
+       │
+       ▼
+Controlled Execution
+       │
+       ▼
+Forensic Evidence
+</code></pre></div></div>
+
+<p>The architecture creates multiple opportunities to stop propagation.</p>
+
+<hr />
+
+<h1 id="threat-to-control-matrix">Threat-to-Control Matrix</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Threat</th>
+      <th>Ingress</th>
+      <th>Policy</th>
+      <th>Sandbox</th>
+      <th>HITL</th>
+      <th>Telemetry</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Direct prompt injection</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Supporting</td>
+      <td>Conditional</td>
+      <td>Evidence</td>
+    </tr>
+    <tr>
+      <td>Indirect prompt injection</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Conditional</td>
+      <td>Evidence</td>
+    </tr>
+    <tr>
+      <td>Excessive authority</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Evidence</td>
+    </tr>
+    <tr>
+      <td>Confused deputy</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Conditional</td>
+      <td>Evidence</td>
+    </tr>
+    <tr>
+      <td>Credential abuse</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Tool abuse</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Unauthorized mutation</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Cross-tenant exposure</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Runtime compromise</td>
+      <td>—</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Runaway execution</td>
+      <td>—</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Approval manipulation</td>
+      <td>—</td>
+      <td>Supporting</td>
+      <td>—</td>
+      <td>Primary</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Policy bypass</td>
+      <td>—</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Telemetry manipulation</td>
+      <td>—</td>
+      <td>Supporting</td>
+      <td>Supporting</td>
+      <td>—</td>
+      <td>Primary</td>
+    </tr>
+    <tr>
+      <td>Data leakage</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Primary</td>
+      <td>Conditional</td>
+      <td>Supporting</td>
+    </tr>
+    <tr>
+      <td>Configuration tampering</td>
+      <td>—</td>
+      <td>Primary</td>
+      <td>Supporting</td>
+      <td>Supporting</td>
+      <td>Primary</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The matrix identifies architectural responsibilities.</p>
+
+<p>It does not imply that a single layer completely mitigates a threat.</p>
+
+<hr />
+
+<h1 id="threat-severity">Threat Severity</h1>
+
+<p>AZTA deployments should classify threats according to their potential impact and likelihood.</p>
+
+<p>A generic model can use:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Severity = Impact × Likelihood
+</code></pre></div></div>
+
+<p>Implementations may use a more sophisticated risk methodology.</p>
+
+<p>Potential impact dimensions include:</p>
+
+<ul>
+  <li>confidentiality</li>
+  <li>integrity</li>
+  <li>availability</li>
+  <li>financial impact</li>
+  <li>operational impact</li>
+  <li>tenant impact</li>
+  <li>regulatory exposure</li>
+  <li>reputational impact</li>
+  <li>irreversibility</li>
+</ul>
+
+<p>Risk classification should influence control strength.</p>
+
+<p>For example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Low Risk
+   │
+   └── Automated execution
+
+Moderate Risk
+   │
+   └── Additional policy controls
+
+High Risk
+   │
+   └── Human authorization
+
+Critical / Prohibited
+   │
+   └── Deny / terminate
+</code></pre></div></div>
+
+<p>The actual thresholds should be deployment-specific and policy-defined.</p>
+
+<hr />
+
+<h1 id="attack-path-analysis">Attack Path Analysis</h1>
+
+<p>A useful AZTA assessment should analyze complete attack paths rather than isolated vulnerabilities.</p>
+
+<p>Example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Attacker controls external document
+          │
+          ▼
+2. Agent retrieves document
+          │
+          ▼
+3. Document contains malicious instruction
+          │
+          ▼
+4. Model follows instruction
+          │
+          ▼
+5. Agent proposes privileged tool action
+          │
+          ▼
+6. Policy evaluates principal + capability
+          │
+          ├── DENY
+          │
+          └── REQUIRE_APPROVAL
+                         │
+                         ▼
+                  Human Review
+                         │
+                         └── DENY
+</code></pre></div></div>
+
+<p>The security objective is not necessarily to prevent every step from occurring.</p>
+
+<p>The objective is to prevent the attack path from reaching an unauthorized external effect.</p>
+
+<hr />
+
+<h1 id="blast-radius">Blast Radius</h1>
+
+<p>AZTA evaluates compromises partly by the amount of authority available after compromise.</p>
+
+<p>A useful conceptual model is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Blast Radius =
+    Identity Scope
+  × Capability Scope
+  × Resource Scope
+  × Runtime Scope
+  × Time
+</code></pre></div></div>
+
+<p>Reducing any of these dimensions can reduce potential impact.</p>
+
+<p>Controls include:</p>
+
+<ul>
+  <li>least privilege</li>
+  <li>tenant isolation</li>
+  <li>scoped capabilities</li>
+  <li>short-lived credentials</li>
+  <li>ephemeral runtimes</li>
+  <li>network restrictions</li>
+  <li>execution budgets</li>
+  <li>approval gates</li>
+</ul>
+
+<p>This is a conceptual risk model rather than a normative mathematical formula.</p>
+
+<hr />
+
+<h1 id="security-invariants">Security Invariants</h1>
+
+<p>The following invariants should remain true even when the reasoning layer is compromised.</p>
+
+<h2 id="invariant-1--model-output-cannot-grant-authority">Invariant 1 — Model output cannot grant authority</h2>
+
+<p>Generated text cannot independently establish authorization.</p>
+
+<h2 id="invariant-2--external-content-cannot-redefine-policy">Invariant 2 — External content cannot redefine policy</h2>
+
+<p>Retrieved instructions cannot override the control plane.</p>
+
+<h2 id="invariant-3--tool-availability-does-not-equal-tool-authorization">Invariant 3 — Tool availability does not equal tool authorization</h2>
+
+<p>A callable tool is not automatically authorized for every operation.</p>
+
+<h2 id="invariant-4--identity-follows-the-actual-principal">Invariant 4 — Identity follows the actual principal</h2>
+
+<p>A downstream component should not infer authority merely from upstream trust.</p>
+
+<h2 id="invariant-5--tenant-boundaries-remain-enforceable">Invariant 5 — Tenant boundaries remain enforceable</h2>
+
+<p>Agent reasoning cannot override tenant-specific authorization.</p>
+
+<h2 id="invariant-6--runtime-access-remains-constrained">Invariant 6 — Runtime access remains constrained</h2>
+
+<p>A compromised workload cannot automatically obtain unrestricted host access.</p>
+
+<h2 id="invariant-7--high-impact-actions-can-be-interrupted">Invariant 7 — High-impact actions can be interrupted</h2>
+
+<p>Policy can require external human authorization.</p>
+
+<h2 id="invariant-8--security-decisions-produce-evidence">Invariant 8 — Security decisions produce evidence</h2>
+
+<p>Important decisions should be observable and correlatable.</p>
+
+<h2 id="invariant-9--controls-cannot-silently-fail-open">Invariant 9 — Controls cannot silently fail open</h2>
+
+<p>Failure behavior must be explicitly defined.</p>
+
+<h2 id="invariant-10--administrative-controls-are-themselves-protected">Invariant 10 — Administrative controls are themselves protected</h2>
+
+<p>An attacker who can modify the policy system can potentially defeat the entire architecture.</p>
+
+<hr />
+
+<h1 id="threat-modeling-process">Threat Modeling Process</h1>
+
+<p>An AZTA deployment should perform threat modeling throughout the system lifecycle.</p>
+
+<p>A practical process is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Identify Assets
+      │
+      ▼
+Identify Principals
+      │
+      ▼
+Map Trust Boundaries
+      │
+      ▼
+Identify Attack Surfaces
+      │
+      ▼
+Enumerate Threats
+      │
+      ▼
+Map Threats to Controls
+      │
+      ▼
+Assess Residual Risk
+      │
+      ▼
+Define Tests
+      │
+      ▼
+Monitor Runtime
+      │
+      ▼
+Update Model
+</code></pre></div></div>
+
+<p>Threat modeling should be revisited when:</p>
+
+<ul>
+  <li>a new tool is introduced</li>
+  <li>capabilities change</li>
+  <li>models change</li>
+  <li>agents gain new authority</li>
+  <li>new tenants are added</li>
+  <li>infrastructure changes</li>
+  <li>policies change</li>
+  <li>external integrations change</li>
+  <li>incidents occur</li>
+</ul>
+
+<hr />
+
+<h1 id="adversarial-testing">Adversarial Testing</h1>
+
+<p>Threat models should be validated through adversarial testing.</p>
+
+<p>Testing may include:</p>
+
+<ul>
+  <li>direct prompt-injection attempts</li>
+  <li>indirect prompt-injection attempts</li>
+  <li>unauthorized tool calls</li>
+  <li>privilege-escalation attempts</li>
+  <li>cross-tenant access attempts</li>
+  <li>credential misuse</li>
+  <li>policy-bypass attempts</li>
+  <li>malformed tool parameters</li>
+  <li>sandbox escape attempts</li>
+  <li>resource-exhaustion tests</li>
+  <li>approval manipulation tests</li>
+  <li>telemetry integrity tests</li>
+  <li>kill-switch tests</li>
+</ul>
+
+<p>The objective is to test the enforcement boundaries rather than merely evaluating whether the model produces a desirable response.</p>
+
+<hr />
+
+<h1 id="residual-risk">Residual Risk</h1>
+
+<p>No architecture eliminates all risk.</p>
+
+<p>Residual risk can remain in:</p>
+
+<ul>
+  <li>compromised identity infrastructure</li>
+  <li>vulnerable external systems</li>
+  <li>incorrect policy</li>
+  <li>compromised administrators</li>
+  <li>runtime vulnerabilities</li>
+  <li>supply-chain compromise</li>
+  <li>unknown model behaviors</li>
+  <li>telemetry failures</li>
+  <li>human decision errors</li>
+</ul>
+
+<p>AZTA therefore focuses on making authority explicit, limiting blast radius, and creating observable control boundaries.</p>
+
+<hr />
+
+<h1 id="threat-model-summary">Threat Model Summary</h1>
+
+<p>The central AZTA threat assumption is:</p>
+
+<blockquote>
+  <p><strong>The agent may be compromised without the entire system becoming compromised.</strong></p>
+</blockquote>
+
+<p>The architecture achieves this through layered separation:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UNTRUSTED INPUT
+      │
+      ▼
+   INSPECT
+      │
+      ▼
+  AUTHORIZE
+      │
+      ▼
+   REASON
+      │
+      ▼
+   PROPOSE
+      │
+      ▼
+  RE-AUTHORIZE
+      │
+      ▼
+   CONTAIN
+      │
+      ▼
+  HUMAN-CHECK
+      │
+      ▼
+   EXECUTE
+      │
+      ▼
+    RECORD
+      │
+      ▼
+   INVESTIGATE
+</code></pre></div></div>
+
+<p>The model remains a powerful reasoning component.</p>
+
+<p>It is not the final security authority.</p>
+
+<p>AZTA’s security objective is to ensure that manipulation of probabilistic reasoning does not automatically become unrestricted access to protected resources.</p>
+
+<blockquote>
+  <p><strong>Compromise the agent. Contain the compromise. Preserve the evidence.</strong></p>
+</blockquote>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/developer-docs/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Developer Documentation</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Developer Documentation</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Technical documentation, guides, references, and engineering articles.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

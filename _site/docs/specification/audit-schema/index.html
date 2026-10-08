@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.9.1 -->
+<title>AZTA Audit Event Schema | Developer Documentation</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="AZTA Audit Event Schema" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Technical documentation, guides, references, and engineering articles." />
+<meta name="twitter:description" property="og:description" content="Technical documentation, guides, references, and engineering articles." />
+<link rel="canonical" href="https://agenticmotion.github.io/developer-docs/docs/specification/audit-schema/" />
+<meta property="og:url" content="https://agenticmotion.github.io/developer-docs/docs/specification/audit-schema/" />
+<meta property="og:site_name" content="Developer Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="AZTA Audit Event Schema" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Technical documentation, guides, references, and engineering articles.","headline":"AZTA Audit Event Schema","url":"https://agenticmotion.github.io/developer-docs/docs/specification/audit-schema/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/developer-docs/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://agenticmotion.github.io/developer-docs/feed.xml" title="Developer Documentation" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/developer-docs/">Developer Documentation</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/developer-docs/docs/azta/architecture/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/audit-schema/">AZTA Audit Event Schema</a><a class="page-link" href="/developer-docs/docs/azta/enforcement-layers/">AZTA Enforcement Layers</a><a class="page-link" href="/developer-docs/docs/azta/execution-model/">AZTA Execution Model</a><a class="page-link" href="/developer-docs/docs/azta/">AZTA Architecture</a><a class="page-link" href="/developer-docs/docs/specification/">AZTA Specification</a><a class="page-link" href="/developer-docs/">Developer Documentation</a><a class="page-link" href="/developer-docs/docs/security/">AZTA Security</a><a class="page-link" href="/developer-docs/docs/">AZTA Documentation</a><a class="page-link" href="/developer-docs/docs/reference/">AZTA Reference</a><a class="page-link" href="/developer-docs/docs/compliance/">AZTA Compliance</a><a class="page-link" href="/developer-docs/docs/azta/threat-model/">AZTA Threat Model</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <h1 id="azta-audit-event-schema">AZTA Audit Event Schema</h1>
+
+<p><strong>Status:</strong> Public Draft<br />
+<strong>Version:</strong> 1.0.0-draft<br />
+<strong>Scope:</strong> Agentic Zero Trust Architecture (AZTA)</p>
+
+<p>The AZTA Audit Event Schema defines a normalized machine-readable representation of security-relevant events occurring throughout an agentic system.</p>
+
+<p>The schema is designed to support:</p>
+
+<ul>
+  <li>security monitoring</li>
+  <li>policy verification</li>
+  <li>authorization decisions</li>
+  <li>forensic investigation</li>
+  <li>incident reconstruction</li>
+  <li>compliance evidence</li>
+  <li>cross-system correlation</li>
+  <li>runtime anomaly detection</li>
+  <li>immutable audit storage</li>
+</ul>
+
+<p>The schema intentionally separates <strong>what an agent proposed</strong> from <strong>what the control plane authorized</strong> and <strong>what the execution environment actually performed</strong>.</p>
+
+<hr />
+
+<h2 id="design-principle">Design Principle</h2>
+
+<blockquote>
+  <p><strong>Reasoning is observable. Authorization is deterministic. Execution is verifiable.</strong></p>
+</blockquote>
+
+<p>An LLM-generated action is not itself evidence that an action occurred.</p>
+
+<p>AZTA therefore distinguishes between:</p>
+
+<ol>
+  <li><strong>Intent</strong> — what was requested or proposed.</li>
+  <li><strong>Decision</strong> — what policy determined.</li>
+  <li><strong>Authorization</strong> — whether execution was permitted.</li>
+  <li><strong>Execution</strong> — what actually happened.</li>
+  <li><strong>Evidence</strong> — the resulting security record.</li>
+</ol>
+
+<hr />
+
+<h2 id="event-model">Event Model</h2>
+
+<p>An AZTA audit event represents a single security-relevant transition or observation.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Request
+   ↓
+Inspection
+   ↓
+Policy Evaluation
+   ↓
+Authorization
+   ↓
+Execution
+   ↓
+Result
+   ↓
+Evidence
+</code></pre></div></div>
+
+<p>Events should be correlated through stable identifiers rather than relying exclusively on timestamps or textual descriptions.</p>
+
+<hr />
+
+<h2 id="required-event-properties">Required Event Properties</h2>
+
+<p>Every audit event should provide enough information to answer:</p>
+
+<ul>
+  <li>What happened?</li>
+  <li>When did it happen?</li>
+  <li>Where did it happen?</li>
+  <li>Who or what initiated it?</li>
+  <li>Which request or execution did it belong to?</li>
+  <li>What decision was made?</li>
+  <li>Which policy produced that decision?</li>
+  <li>What capability was requested?</li>
+  <li>What was actually executed?</li>
+  <li>What evidence was generated?</li>
+</ul>
+
+<hr />
+
+<h2 id="canonical-event-structure">Canonical Event Structure</h2>
+
+<p>The following structure defines the public AZTA v1 draft model.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"schema_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"azta.audit.v1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"event_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"evt_01..."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"event_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"policy.decision"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"event_time"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-01T00:00:00Z"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"trace_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"trace_01..."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"request_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"req_01..."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"execution_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"exec_01..."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tenant_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tenant_01..."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"actor"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent_01..."</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"action"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.call"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"example_tool"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"example-resource"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"authorization"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"decision"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deny"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"policy_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"policy.example"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"policy_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"reason_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CAPABILITY_NOT_PERMITTED"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"execution"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"not_executed"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"security"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"risk_level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"control_layer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deterministic_policy_gateway"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The exact implementation may add deployment-specific fields, but implementations should preserve the semantic meaning of the core fields.</p>
+
+<hr />
+
+<h1 id="core-fields">Core Fields</h1>
+
+<h2 id="schema_version"><code class="language-plaintext highlighter-rouge">schema_version</code></h2>
+
+<p>Identifies the AZTA schema version used to encode the event.</p>
+
+<p>Example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>azta.audit.v1
+</code></pre></div></div>
+
+<p>Schema versions should be immutable once published.</p>
+
+<p>Breaking changes require a new major schema version.</p>
+
+<hr />
+
+<h2 id="event_id"><code class="language-plaintext highlighter-rouge">event_id</code></h2>
+
+<p>Globally unique identifier for the individual audit event.</p>
+
+<p>Example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>evt_01JEXAMPLE123
+</code></pre></div></div>
+
+<p>The identifier should remain stable throughout the event’s lifecycle.</p>
+
+<hr />
+
+<h2 id="event_type"><code class="language-plaintext highlighter-rouge">event_type</code></h2>
+
+<p>Describes the semantic category of the event.</p>
+
+<p>Examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>request.created
+request.inspected
+policy.evaluated
+policy.decision
+authorization.granted
+authorization.denied
+execution.started
+execution.completed
+execution.failed
+execution.terminated
+approval.requested
+approval.granted
+approval.denied
+credential.issued
+credential.revoked
+telemetry.recorded
+security.alert
+</code></pre></div></div>
+
+<p>Implementations may define additional event types provided they do not redefine the meaning of existing types.</p>
+
+<hr />
+
+<h2 id="event_time"><code class="language-plaintext highlighter-rouge">event_time</code></h2>
+
+<p>Timestamp representing when the event occurred.</p>
+
+<p>Recommended representation:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RFC 3339 / ISO 8601 UTC
+</code></pre></div></div>
+
+<p>Example:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2026-01-01T00:00:00Z
+</code></pre></div></div>
+
+<p>Systems should synchronize clocks where practical and should preserve sufficient timestamp precision for event ordering.</p>
+
+<hr />
+
+<h2 id="correlation-identifiers">Correlation Identifiers</h2>
+
+<p>AZTA events should support correlation across the complete execution lifecycle.</p>
+
+<h3 id="trace_id"><code class="language-plaintext highlighter-rouge">trace_id</code></h3>
+
+<p>Identifies the broader distributed operation.</p>
+
+<h3 id="request_id"><code class="language-plaintext highlighter-rouge">request_id</code></h3>
+
+<p>Identifies the originating user or system request.</p>
+
+<h3 id="execution_id"><code class="language-plaintext highlighter-rouge">execution_id</code></h3>
+
+<p>Identifies a specific execution attempt.</p>
+
+<p>These identifiers allow investigators to reconstruct an execution without depending on individual log messages.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trace_id
+└── request_id
+    ├── policy evaluation
+    ├── agent reasoning
+    ├── authorization
+    └── execution_id
+        ├── tool call
+        ├── sandbox activity
+        └── result
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="actor-model">Actor Model</h1>
+
+<p>The <code class="language-plaintext highlighter-rouge">actor</code> object identifies the entity responsible for initiating an event.</p>
+
+<p>Possible actor types include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>user
+agent
+service
+policy_engine
+system
+administrator
+human_approver
+external_system
+</code></pre></div></div>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"actor"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent_01"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Actor identity should be independently resolvable where possible.</p>
+
+<p>An LLM model name alone should not be treated as an authenticated identity.</p>
+
+<hr />
+
+<h1 id="action-model">Action Model</h1>
+
+<p>The <code class="language-plaintext highlighter-rouge">action</code> object describes the operation being evaluated or executed.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"action"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.call"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"database.query"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"customer_records"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Potential action types include:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tool.call</code></li>
+  <li><code class="language-plaintext highlighter-rouge">http.request</code></li>
+  <li><code class="language-plaintext highlighter-rouge">database.query</code></li>
+  <li><code class="language-plaintext highlighter-rouge">file.read</code></li>
+  <li><code class="language-plaintext highlighter-rouge">file.write</code></li>
+  <li><code class="language-plaintext highlighter-rouge">process.execute</code></li>
+  <li><code class="language-plaintext highlighter-rouge">credential.access</code></li>
+  <li><code class="language-plaintext highlighter-rouge">message.send</code></li>
+  <li><code class="language-plaintext highlighter-rouge">workflow.invoke</code></li>
+  <li><code class="language-plaintext highlighter-rouge">state.mutate</code></li>
+</ul>
+
+<p>Implementations should use the narrowest practical action type.</p>
+
+<hr />
+
+<h1 id="authorization-model">Authorization Model</h1>
+
+<p>Authorization records the control-plane decision concerning the proposed action.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"authorization"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"decision"</span><span class="p">:</span><span class="w"> </span><span class="s2">"allow"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"policy_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent.database.read"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"policy_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.4.0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"reason_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CAPABILITY_PERMITTED"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Supported decision values:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>allow
+deny
+require_approval
+defer
+</code></pre></div></div>
+
+<p>Authorization must be evaluated independently of the LLM’s generated reasoning.</p>
+
+<hr />
+
+<h1 id="policy-identity">Policy Identity</h1>
+
+<p>Every policy decision should identify the policy that produced the decision.</p>
+
+<p>Minimum recommended fields:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>policy_id
+policy_version
+decision
+reason_code
+</code></pre></div></div>
+
+<p>This permits historical reconstruction after policies change.</p>
+
+<p>A later policy revision must not silently rewrite the meaning of an earlier event.</p>
+
+<hr />
+
+<h1 id="execution-model">Execution Model</h1>
+
+<p>Execution records what actually happened after authorization.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"execution"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"completed"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"runtime_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"runtime_01"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"started_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-01T00:00:01Z"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"completed_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-01T00:00:03Z"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Recommended status values:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>not_executed
+pending
+started
+completed
+failed
+terminated
+cancelled
+</code></pre></div></div>
+
+<p>The distinction between <code class="language-plaintext highlighter-rouge">authorized</code> and <code class="language-plaintext highlighter-rouge">executed</code> is mandatory.</p>
+
+<p>An authorization event must never be interpreted as proof that execution occurred.</p>
+
+<hr />
+
+<h1 id="security-context">Security Context</h1>
+
+<p>The <code class="language-plaintext highlighter-rouge">security</code> object provides normalized security metadata.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"security"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"risk_level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"control_layer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deterministic_policy_gateway"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Recommended risk levels:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unknown
+low
+medium
+high
+critical
+</code></pre></div></div>
+
+<p>Recommended AZTA control-layer identifiers:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ingress_semantic_firewall
+deterministic_policy_gateway
+ephemeral_microvm_sandbox
+hitl_interceptor
+forensic_telemetry_engine
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="evidence-integrity">Evidence Integrity</h1>
+
+<p>Audit events are security evidence and should therefore be protected from unauthorized modification.</p>
+
+<p>Implementations SHOULD support:</p>
+
+<ul>
+  <li>append-only storage</li>
+  <li>immutable retention</li>
+  <li>cryptographic integrity protection</li>
+  <li>trusted timestamps</li>
+  <li>access-controlled retrieval</li>
+  <li>tamper detection</li>
+  <li>retention policies</li>
+  <li>chain or batch integrity mechanisms</li>
+</ul>
+
+<p>The event schema itself does not mandate a particular storage provider.</p>
+
+<hr />
+
+<h1 id="sensitive-data">Sensitive Data</h1>
+
+<p>Audit records may contain sensitive operational information.</p>
+
+<p>Implementations should avoid unnecessarily storing:</p>
+
+<ul>
+  <li>raw credentials</li>
+  <li>access tokens</li>
+  <li>private keys</li>
+  <li>authentication secrets</li>
+  <li>complete user prompts where unnecessary</li>
+  <li>unrestricted tool output</li>
+  <li>unnecessary personal data</li>
+</ul>
+
+<p>Where sensitive content must be referenced, implementations should prefer:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>identifier
+hash
+pointer
+classification
+redacted representation
+</code></pre></div></div>
+
+<p>over storing the underlying secret directly.</p>
+
+<hr />
+
+<h1 id="event-immutability">Event Immutability</h1>
+
+<p>Once an event has entered the authoritative audit store, its semantic contents should be treated as immutable.</p>
+
+<p>Corrections should be represented through additional events rather than destructive modification.</p>
+
+<p>Conceptually:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Original Event
+      ↓
+Correction Event
+      ↓
+Audit History
+</code></pre></div></div>
+
+<p>This preserves historical truth and supports forensic reconstruction.</p>
+
+<hr />
+
+<h1 id="event-lifecycle">Event Lifecycle</h1>
+
+<p>A representative lifecycle may appear as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>request.created
+       ↓
+request.inspected
+       ↓
+policy.evaluated
+       ↓
+policy.decision
+       ↓
+authorization.granted
+       ↓
+execution.started
+       ↓
+execution.completed
+       ↓
+telemetry.recorded
+</code></pre></div></div>
+
+<p>A denied operation may instead terminate at:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>request.created
+       ↓
+request.inspected
+       ↓
+policy.evaluated
+       ↓
+policy.decision
+       ↓
+authorization.denied
+</code></pre></div></div>
+
+<p>A human-controlled operation may include:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>policy.decision
+       ↓
+approval.requested
+       ↓
+approval.granted
+       ↓
+execution.started
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="failure-events">Failure Events</h1>
+
+<p>Failures should be recorded explicitly rather than inferred from missing events.</p>
+
+<p>Examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>execution.failed
+execution.terminated
+authorization.denied
+credential.revoked
+security.alert
+</code></pre></div></div>
+
+<p>A missing event is not equivalent to a successful event.</p>
+
+<hr />
+
+<h1 id="termination-events">Termination Events</h1>
+
+<p>Forced termination should generate an explicit audit record.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"event_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"execution.terminated"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"execution"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"terminated"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"security"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"reason_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"KILL_SWITCH_ACTIVATED"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Termination records should preserve the relationship between:</p>
+
+<ul>
+  <li>the execution</li>
+  <li>the initiating actor</li>
+  <li>the reason</li>
+  <li>the authorization state</li>
+  <li>the affected runtime</li>
+  <li>subsequent containment actions</li>
+</ul>
+
+<hr />
+
+<h1 id="human-approval">Human Approval</h1>
+
+<p>Human approval events should identify:</p>
+
+<ul>
+  <li>approval request</li>
+  <li>requested action</li>
+  <li>approver identity</li>
+  <li>decision</li>
+  <li>timestamp</li>
+  <li>authorization scope</li>
+  <li>policy context</li>
+</ul>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"event_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approval.granted"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"actor"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"human_approver"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"approver_01"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"authorization"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"decision"</span><span class="p">:</span><span class="w"> </span><span class="s2">"allow"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Approval should authorize a defined action or capability rather than providing unrestricted authority to the agent.</p>
+
+<hr />
+
+<h1 id="credential-events">Credential Events</h1>
+
+<p>Credential lifecycle events should be independently auditable.</p>
+
+<p>Examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>credential.issued
+credential.accessed
+credential.rotated
+credential.revoked
+</code></pre></div></div>
+
+<p>Audit records should reference credentials by stable identifiers rather than recording secret material.</p>
+
+<hr />
+
+<h1 id="multi-tenant-isolation">Multi-Tenant Isolation</h1>
+
+<p>Where an implementation supports multiple tenants, tenant context should be preserved in every event where applicable.</p>
+
+<p>Example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"tenant_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tenant_01"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Cross-tenant correlation must not expose tenant-sensitive information.</p>
+
+<p>Audit infrastructure itself must enforce tenant isolation.</p>
+
+<hr />
+
+<h1 id="minimal-event-requirements">Minimal Event Requirements</h1>
+
+<p>A minimal valid AZTA event should contain:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>schema_version
+event_id
+event_type
+event_time
+</code></pre></div></div>
+
+<p>Security-sensitive events should additionally provide, where applicable:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trace_id
+request_id
+execution_id
+actor
+action
+authorization
+execution
+security
+</code></pre></div></div>
+
+<p>Implementations may require additional fields according to their deployment threat model.</p>
+
+<hr />
+
+<h1 id="deterministic-decision-evidence">Deterministic Decision Evidence</h1>
+
+<p>For policy decisions, the audit record should allow an investigator to determine:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>INPUT
+  ↓
+IDENTITY
+  ↓
+REQUESTED CAPABILITY
+  ↓
+POLICY VERSION
+  ↓
+POLICY DECISION
+  ↓
+AUTHORIZATION
+  ↓
+EXECUTION
+</code></pre></div></div>
+
+<p>This prevents a common forensic failure:</p>
+
+<blockquote>
+  <p>knowing that an action occurred without knowing why the system permitted it.</p>
+</blockquote>
+
+<hr />
+
+<h1 id="event-correlation">Event Correlation</h1>
+
+<p>Events should be correlated using identifiers rather than natural-language descriptions.</p>
+
+<p>Recommended hierarchy:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Trace
+└── Request
+    ├── Inspection
+    ├── Policy Decisions
+    ├── Approvals
+    └── Execution
+        ├── Tool Operations
+        ├── Runtime Events
+        ├── Results
+        └── Termination
+</code></pre></div></div>
+
+<p>This enables investigators to reconstruct both successful and failed execution paths.</p>
+
+<hr />
+
+<h1 id="storage-requirements">Storage Requirements</h1>
+
+<p>The schema is storage-independent.</p>
+
+<p>A compliant implementation may use:</p>
+
+<ul>
+  <li>object storage</li>
+  <li>relational databases</li>
+  <li>event stores</li>
+  <li>security information and event management systems</li>
+  <li>distributed telemetry platforms</li>
+  <li>immutable archival systems</li>
+</ul>
+
+<p>The storage implementation must preserve event integrity and retention requirements.</p>
+
+<p>For high-assurance environments, immutable or WORM-capable storage should be considered for authoritative evidence.</p>
+
+<hr />
+
+<h1 id="opentelemetry-alignment">OpenTelemetry Alignment</h1>
+
+<p>AZTA audit events can be correlated with distributed tracing and telemetry systems.</p>
+
+<p>An implementation may map:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trace_id → distributed trace
+request_id → application request
+execution_id → execution span
+event_id → individual audit record
+</code></pre></div></div>
+
+<p>OpenTelemetry should provide observability infrastructure.</p>
+
+<p>AZTA remains responsible for defining the security semantics of authorization, execution, and forensic evidence.</p>
+
+<hr />
+
+<h1 id="schema-evolution">Schema Evolution</h1>
+
+<p>Schema changes should follow explicit versioning.</p>
+
+<h3 id="patch">Patch</h3>
+
+<p>Non-semantic corrections that do not alter interpretation.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.0.0 → 1.0.1
+</code></pre></div></div>
+
+<h3 id="minor">Minor</h3>
+
+<p>Backward-compatible additions.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.0.0 → 1.1.0
+</code></pre></div></div>
+
+<h3 id="major">Major</h3>
+
+<p>Breaking semantic or structural changes.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.x → 2.0.0
+</code></pre></div></div>
+
+<p>Historical events must remain interpretable under the schema version with which they were originally recorded.</p>
+
+<hr />
+
+<h1 id="implementation-requirements">Implementation Requirements</h1>
+
+<p>An AZTA implementation claiming compatibility with this draft should:</p>
+
+<ol>
+  <li>Generate unique event identifiers.</li>
+  <li>Record event timestamps.</li>
+  <li>Preserve execution correlation identifiers.</li>
+  <li>Distinguish proposed actions from executed actions.</li>
+  <li>Record authorization decisions.</li>
+  <li>Identify policy versions.</li>
+  <li>Record execution outcomes.</li>
+  <li>Preserve security-relevant failures.</li>
+  <li>Protect authoritative audit records from unauthorized modification.</li>
+  <li>Avoid storing secrets directly in audit events.</li>
+  <li>Support forensic correlation across the execution lifecycle.</li>
+  <li>Preserve historical schema versions.</li>
+</ol>
+
+<hr />
+
+<h1 id="security-invariants">Security Invariants</h1>
+
+<p>The audit system should preserve the following invariants:</p>
+
+<h3 id="invariant-1--authorization-is-observable">Invariant 1 — Authorization Is Observable</h3>
+
+<p>A security-relevant execution must have an attributable authorization decision.</p>
+
+<h3 id="invariant-2--execution-is-distinct-from-intent">Invariant 2 — Execution Is Distinct From Intent</h3>
+
+<p>A model proposal must not be interpreted as proof of execution.</p>
+
+<h3 id="invariant-3--policy-is-identifiable">Invariant 3 — Policy Is Identifiable</h3>
+
+<p>Security decisions must be attributable to a specific policy version.</p>
+
+<h3 id="invariant-4--failures-are-explicit">Invariant 4 — Failures Are Explicit</h3>
+
+<p>Security-relevant failures and terminations should produce explicit events.</p>
+
+<h3 id="invariant-5--evidence-is-tamper-resistant">Invariant 5 — Evidence Is Tamper Resistant</h3>
+
+<p>Authoritative audit records should not be silently rewritten.</p>
+
+<h3 id="invariant-6--secrets-are-not-evidence">Invariant 6 — Secrets Are Not Evidence</h3>
+
+<p>Credentials and secret material must not be used as ordinary audit payloads.</p>
+
+<h3 id="invariant-7--historical-truth-is-preserved">Invariant 7 — Historical Truth Is Preserved</h3>
+
+<p>Corrections should append new evidence rather than destroy previous evidence.</p>
+
+<hr />
+
+<h1 id="public-specification-status">Public Specification Status</h1>
+
+<p>This document defines the <strong>public AZTA audit-event model draft</strong>.</p>
+
+<p>It is intentionally implementation-neutral.</p>
+
+<p>The machine-readable JSON Schema is maintained separately at:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/schema/azta_audit_record.v1.json
+</code></pre></div></div>
+
+<p>The machine-readable schema and this semantic specification should evolve together.</p>
+
+<hr />
+
+<h1 id="summary">Summary</h1>
+
+<p>The AZTA audit model establishes a common evidence language for agentic systems.</p>
+
+<p>The fundamental distinction is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>What the agent wanted to do
+        ≠
+What policy allowed
+        ≠
+What the runtime executed
+        ≠
+What the system recorded
+</code></pre></div></div>
+
+<p>A trustworthy agentic architecture must be able to distinguish all four.</p>
+
+<blockquote>
+  <p><strong>Reasoning may be non-deterministic. Evidence must not be.</strong></p>
+</blockquote>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/developer-docs/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Developer Documentation</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Developer Documentation</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Technical documentation, guides, references, and engineering articles.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
